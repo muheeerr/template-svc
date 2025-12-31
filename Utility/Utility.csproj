@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<PackageReference Include="AWSSDK.S3" />
+		<PackageReference Include="OtpSharp.Core" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+		<PackageReference Include="Grpc.AspNetCore" />
+		<!--ef core-->
+		<PackageReference Include="Microsoft.EntityFrameworkCore" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+		<!--ef core-->
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+		<PackageReference Include="Microsoft.OpenApi" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+
+		<PackageReference Include="Newtonsoft.Json" />
+		<PackageReference Include="Serilog.Sinks.File" />
+
+		<PackageReference Include="NATS.Client.JetStream" />
+
+		<PackageReference Include="StackExchange.Redis" />
+
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+
+		<PackageReference Include="FluentValidation" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Protobuf Include=".\EndpointExposerGRPC\Exposed\ActionExposed.proto" GrpcServices="Server" OutputDir="Protos\Compiled" />
+	</ItemGroup>
+
+</Project>

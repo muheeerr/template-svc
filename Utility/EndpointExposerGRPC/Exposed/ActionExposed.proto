@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package ActionExposedGRPC;
+
+message RequestGetActions{
+}
+
+message ApiResponseTemplate{
+    bool IsApiHandled=1;
+    bool IsRequestSuccess=2;
+    int32 StatusCode=3;
+    string Message=4;
+    ResponseGetActions Data=5;
+    repeated string Exceptions=6;        
+}
+
+message ResponseGetActions{
+    string apiName=1; 
+    repeated string routes=2;
+}
+
+service ActionExposedServiceGRPC{
+    rpc GetActions(RequestGetActions) returns (ApiResponseTemplate);
+}

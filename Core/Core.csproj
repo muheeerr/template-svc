@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<PackageReference Include="Grpc.Tools">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Grpc.Core" />
+		<PackageReference Include="AWSSDK.S3" />
+		<PackageReference Include="EPPlus" />
+		<PackageReference Include="MailKit" />
+		<PackageReference Include="MimeKit" />
+		<PackageReference Include="Mediator.Abstractions" />
+		<PackageReference Include="Mediator.SourceGenerator">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<!-- TODO: Add your proto files here -->
+	<!--
+	<ItemGroup>
+		<Protobuf Include=".\Protos\Client\YourService.proto" GrpcServices="Client" />
+		<Protobuf Include=".\Protos\Server\YourService.proto" GrpcServices="Server" />
+	</ItemGroup>
+	-->
+
+	<ItemGroup>
+		<ProjectReference Include="..\DA\DA.csproj" />
+		<ProjectReference Include="..\Utility\Utility.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+﻿// Create Migartion
+dotnet ef migrations add {name here} --project DA --startup-project Oaken.Host --context OakenDbContext --output-dir Persistence/Migrations
+
+// Apply Migration
+dotnet ef database update --project Core --startup-project Oaken.Host --context OakenDbContext
+
+//create image and push
+docker build --no-cache -t "harbor.qbscocloud.net:30003/oaken/oaken-svc:latest" -f ./Oaken.Host/Dockerfile . 
+;docker push harbor.qbscocloud.net:30003/oaken/oaken-svc:latest 

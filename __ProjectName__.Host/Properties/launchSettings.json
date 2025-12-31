@@ -1,0 +1,69 @@
+{
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DBHost": "Host=localhost;Port=5432;Database=__ProjectName__Db;Username=postgres;Password=postgres",
+        "RedisHost": "localhost:6379",
+        "JWT_KEY": "__REPLACE_WITH_SECURE_KEY__",
+        "JWT_ISSUER": "localhost",
+        "JWT_AUDIENCE": "localhost",
+        "JWT_ACCESS_TOKEN_EXPIRATION_IN_MINUTES": "180",
+        "JWT_REFRESH_TOKEN_EXPIRATION_IN_DAYS": "30",
+        "AWS_ACCESS_KEY_ID": "__YOUR_AWS_ACCESS_KEY__",
+        "AWS_SECRET_ACCESS_KEY": "__YOUR_AWS_SECRET_KEY__",
+        "S3_BUCKET_NAME": "__your-bucket-name__",
+        "AWS_REGION": "us-east-1"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5007"
+    },
+    "https": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "RedisHost": "localhost:6379",
+        "DBHost": "Host=localhost;Port=5432;Database=__ProjectName__Db;Username=postgres;Password=postgres",
+        "JWT_KEY": "__REPLACE_WITH_SECURE_KEY__",
+        "JWT_ISSUER": "localhost",
+        "JWT_AUDIENCE": "localhost",
+        "JWT_ACCESS_TOKEN_EXPIRATION_IN_MINUTES": "180",
+        "JWT_REFRESH_TOKEN_EXPIRATION_IN_DAYS": "30",
+        "AWS_ACCESS_KEY_ID": "__YOUR_AWS_ACCESS_KEY__",
+        "AWS_SECRET_ACCESS_KEY": "__YOUR_AWS_SECRET_KEY__",
+        "S3_BUCKET_NAME": "__your-bucket-name__",
+        "AWS_REGION": "us-east-1",
+        "EMAIL_USERNAME": "__your-email@example.com__",
+        "EMAIL_PASSWORD": "__your-email-password__",
+        "EMAIL_IMAP_HOST": "smtp.example.com",
+        "EMAIL_IMAP_PORT": "587",
+        "SERVER_URL": "http://localhost:5007",
+        "SEQ_URL": "",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "",
+        "AUTH_SERVICE_URL": "localhost:7089"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7199;http://localhost:5007"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "environmentVariables": {
+        "ASPNETCORE_HTTPS_PORTS": "8081",
+        "ASPNETCORE_HTTP_PORTS": "8080",
+        "AWS_ACCESS_KEY_ID": "__YOUR_AWS_ACCESS_KEY__",
+        "AWS_SECRET_ACCESS_KEY": "__YOUR_AWS_SECRET_KEY__",
+        "S3_BUCKET_NAME": "__your-bucket-name__",
+        "AWS_REGION": "us-east-1",
+        "EMAIL_USERNAME": "__your-email@example.com__",
+        "EMAIL_PASSWORD": "__your-email-password__",
+        "EMAIL_IMAP_HOST": "smtp.example.com",
+        "EMAIL_IMAP_PORT": "587"
+      },
+      "publishAllPorts": true,
+      "useSSL": true
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
+}
