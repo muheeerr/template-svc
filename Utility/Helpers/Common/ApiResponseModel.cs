@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json;
 using Utility.CustomHTTP;
 
 namespace Utility.Helpers.Common;
@@ -36,7 +35,7 @@ public class ApiResponseModel : IResult
         response.StatusCode = StatusCode;
         response.ContentType = "application/json";
 
-        var json = JsonConvert.SerializeObject(this, new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() });
+        var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         await response.WriteAsync(json);
     }
 }
