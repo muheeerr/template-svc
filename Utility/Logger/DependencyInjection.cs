@@ -14,10 +14,18 @@ namespace Utility.Logger
                         .CreateLogger()
                 ));
 
-            services.AddHttpClient("slack");
+            services.AddHttpClient("slack")
+                .AddStandardResilienceHandler(options =>
+                {
+                    options.Retry.MaxRetryAttempts = 3;
+                    options.Retry.Delay = TimeSpan.FromMilliseconds(500);
+                    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(30);
+                    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(30);
+                });
             services.AddSingleton<SlackExceptionLogger>();
 
-            Console.WriteLine($"[Info]----->{nameof(AddCustomLogger)} service added");
+            Log.Information("[DI] {ServiceName} registered", nameof(AddCustomLogger));
             return services;
         }
     }

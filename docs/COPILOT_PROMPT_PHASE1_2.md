@@ -1,6 +1,6 @@
 # GitHub Copilot Prompt — template-svc Remediation
 ## Phase 1 (Critical Security) + Phase 2 (Architectural Cleanup)
-> Model: `claude-opus-4-6` | Project: `__ProjectName__` | Stack: .NET 10 / ASP.NET Core Minimal API
+> Model: `claude-opus-4-6` | Project: `projectname` | Stack: .NET 10 / ASP.NET Core Minimal API
 
 ---
 
@@ -9,7 +9,7 @@
 You are working on an ASP.NET Core Minimal API template called `template-svc`. It targets .NET 10 and uses PostgreSQL, Redis, and gRPC. The solution structure is:
 
 ```
-__ProjectName__.Host      ← Entry point, middleware, DI composition root
+projectname.Host      ← Entry point, middleware, DI composition root
 Core                      ← Features, endpoints, business layer DI
 DA                        ← Data access (EF Core, Repository, UnitOfWork)
 Utility                   ← Shared helpers (Auth, JWT, AES, Email, Redis, S3, NATS, etc.)
@@ -27,7 +27,7 @@ A security and architecture review has identified **critical issues** that must 
 
 > **Before writing a single line of fix code, apply this rule globally first.**
 
-All hardcoded credentials, secrets, keys, and connection strings currently scattered across the codebase MUST be extracted and placed as environment variable entries in `__ProjectName__.Host/Properties/launchSettings.json` under the `environmentVariables` section of the appropriate profile.
+All hardcoded credentials, secrets, keys, and connection strings currently scattered across the codebase MUST be extracted and placed as environment variable entries in `projectname.Host/Properties/launchSettings.json` under the `environmentVariables` section of the appropriate profile.
 
 ### Credentials to move to `launchSettings.json`:
 
@@ -36,7 +36,7 @@ All hardcoded credentials, secrets, keys, and connection strings currently scatt
 | `JWT_KEY` | `Host/Extensions/Resources.cs` | `"asdavvasd132132131231232312312dsadasdsdsdsds@asd112"` |
 | `JWT_ISSUER` | `Host/Extensions/Resources.cs` | (any hardcoded default) |
 | `JWT_AUDIENCE` | `Host/Extensions/Resources.cs` | (any hardcoded default) |
-| `DBHost` | `DA/DependencyInjection.cs` | `"Host=localhost;Port=5432;Database=__ProjectName__Db;Username=postgres;Password=postgres"` |
+| `DBHost` | `DA/DependencyInjection.cs` | `"Host=localhost;Port=5432;Database=projectnameDb;Username=postgres;Password=postgres"` |
 | `SenderEmail` | `Utility/EmailSender/DependencyInjection.cs` | `"NA@NA.com"` |
 | `SenderPassword` | `Utility/EmailSender/DependencyInjection.cs` | `"NA"` |
 | `AES_KEY` | `Utility/AuthProvider/AESEncryption/CustomAESEncryption.cs` | (any static key or IV from config) |
@@ -57,7 +57,7 @@ All hardcoded credentials, secrets, keys, and connection strings currently scatt
         "JWT_KEY": "dev-only-change-this-key-min-32-chars!!",
         "JWT_ISSUER": "https://localhost:7087",
         "JWT_AUDIENCE": "template-svc-dev",
-        "DBHost": "Host=localhost;Port=5432;Database=__ProjectName__Dev;Username=postgres;Password=postgres",
+        "DBHost": "Host=localhost;Port=5432;Database=projectnameDev;Username=postgres;Password=postgres",
         "SenderEmail": "dev-sender@yourdomain.com",
         "SenderPassword": "dev-smtp-password",
         "AES_KEY": "dev-aes-key-32-bytes-minimum!!!",
@@ -88,7 +88,7 @@ ArgumentException.ThrowIfNullOrWhiteSpace(key, "JWT_KEY environment variable is 
 
 ### Task 1 — Fix Middleware Ordering in `ConfigureApp.cs`
 
-**File:** `__ProjectName__.Host/Extensions/ConfigureApp.cs`
+**File:** `projectname.Host/Extensions/ConfigureApp.cs`
 
 **Problem:** `MapEndpoints()` is called before `UserContextMiddleware` and `GlobalExceptionHandlerMiddleware`, so those middlewares never execute for any matched route. `UseCors()` is also registered after auth — too late for preflight handling.
 
@@ -112,7 +112,7 @@ Remove `app.UseGrpcServices()` from inside `ConfigureApp` if gRPC mapping belong
 
 ### Task 2 — Enable JWT Issuer & Audience Validation in `Validator.cs`
 
-**File:** `__ProjectName__.Host/Extensions/Validators/Validator.cs`
+**File:** `projectname.Host/Extensions/Validators/Validator.cs`
 
 **Problem:**
 ```csharp
@@ -155,7 +155,7 @@ Also update `Resources.cs` CORS setup (see Task 5 below) at the same time since 
 
 ### Task 4 — Add Startup Configuration Validation in `Program.cs`
 
-**File:** `__ProjectName__.Host/Program.cs`
+**File:** `projectname.Host/Program.cs`
 
 **Required action:** After `var builder = WebApplication.CreateBuilder(args);`, add a centralized startup validation method that verifies all required env vars are present before the app starts:
 
@@ -307,7 +307,7 @@ Remove `AES_IV` from all env vars / `launchSettings.json` — the IV is now gene
 
 ### Task 9 — Add Rate Limiting Middleware
 
-**File:** `__ProjectName__.Host/Program.cs` (registration) + `ConfigureApp.cs` (pipeline)
+**File:** `projectname.Host/Program.cs` (registration) + `ConfigureApp.cs` (pipeline)
 
 **Required action:** Add ASP.NET Core's built-in rate limiting (available since .NET 7):
 
@@ -340,7 +340,7 @@ Add `using System.Threading.RateLimiting;` where needed.
 
 ### Task 10 — Add Security Headers Middleware
 
-**File:** `__ProjectName__.Host/Extensions/ConfigureApp.cs`
+**File:** `projectname.Host/Extensions/ConfigureApp.cs`
 
 **Required action:** Add a middleware call that injects standard security response headers on every response. Place it immediately after `UseCors()`:
 
@@ -384,9 +384,9 @@ app.Use(async (ctx, next) =>
 | `DA/Enums/AccessLevelEnum.cs` | **DELETE** |
 | `DA/Enums/GuardStatus.cs` | **DELETE** |
 | `Utility/Helpers/Common/Constant/KConstant.cs` | Remove `ApiName = "Oaken"`, `BarrierStatusClosedId`, `BarrierStatusOpenId`, `Stagging` (typo) → replace with generic placeholders |
-| `__ProjectName__.Host/Oaken.Host.http` | **DELETE** |
-| `__ProjectName__.Host/Commands.txt` | **DELETE** |
-| `Dockerfile` | Fix `Oaken.Host/Oaken.Host.csproj` reference → `__ProjectName__.Host/__ProjectName__.Host.csproj` |
+| `projectname.Host/Oaken.Host.http` | **DELETE** |
+| `projectname.Host/Commands.txt` | **DELETE** |
+| `Dockerfile` | Fix `Oaken.Host/Oaken.Host.csproj` reference → `projectname.Host/projectname.Host.csproj` |
 
 Replacement for `Core/Features/IFeatures.cs`:
 ```csharp
@@ -403,9 +403,9 @@ public interface IFeatureGroup { }
 
 ### Task 12 — Fix Dockerfile Template Placeholders
 
-**File:** `__ProjectName__.Host/Dockerfile`
+**File:** `projectname.Host/Dockerfile`
 
-**Required action:** Replace every occurrence of `Oaken` with `__ProjectName__`. Ensure all `COPY`, `RUN dotnet restore`, and `ENTRYPOINT` lines use the template placeholder. The final Dockerfile should have zero hardcoded project names:
+**Required action:** Replace every occurrence of `Oaken` with `projectname`. Ensure all `COPY`, `RUN dotnet restore`, and `ENTRYPOINT` lines use the template placeholder. The final Dockerfile should have zero hardcoded project names:
 
 ```dockerfile
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
@@ -415,22 +415,22 @@ EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY ["__ProjectName__.Host/__ProjectName__.Host.csproj", "__ProjectName__.Host/"]
+COPY ["projectname.Host/projectname.Host.csproj", "projectname.Host/"]
 COPY ["Core/Core.csproj",           "Core/"]
 COPY ["DA/DA.csproj",               "DA/"]
 COPY ["Utility/Utility.csproj",     "Utility/"]
-RUN dotnet restore "__ProjectName__.Host/__ProjectName__.Host.csproj"
+RUN dotnet restore "projectname.Host/projectname.Host.csproj"
 COPY . .
-WORKDIR "/src/__ProjectName__.Host"
-RUN dotnet build "__ProjectName__.Host.csproj" -c Release -o /app/build
+WORKDIR "/src/projectname.Host"
+RUN dotnet build "projectname.Host.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "__ProjectName__.Host.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "projectname.Host.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "__ProjectName__.Host.dll"]
+ENTRYPOINT ["dotnet", "projectname.Host.dll"]
 ```
 
 ---
@@ -461,7 +461,7 @@ Specifically target:
 | `Host/Extensions/Resources.cs` | Remove commented-out `AddSwagger()` and `AddCustomLogger` blocks |
 | `Host/Extensions/ConfigureApp.cs` | Remove commented-out migration code |
 | `comment.txt` (root) | **DELETE** |
-| `__ProjectName__.Host/Endpoints.cs` | If unused/unclear — **DELETE or stub with a TODO comment** |
+| `projectname.Host/Endpoints.cs` | If unused/unclear — **DELETE or stub with a TODO comment** |
 
 After deletions, verify the solution still builds: `dotnet build`.
 
@@ -722,3 +722,4 @@ Add `SLACK_WEBHOOK_URL` to `launchSettings.json` with an empty default.
 
 *Generated from architecture review of `template-svc` — .NET 10 ASP.NET Core Minimal API*
 *Phase 3 (Enterprise Capabilities) is excluded from this prompt — handle in a separate session.*
+

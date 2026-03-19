@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using System.Reflection;
 
 namespace Utility.Helpers.ServiceCollectionExtensions
@@ -32,7 +33,7 @@ namespace Utility.Helpers.ServiceCollectionExtensions
 
             }
 
-            Console.WriteLine($"[Info]----->{nameof(AddValidatorUsingAssemblies)} service added");
+            Log.Information("[DI] {ServiceName} registered", nameof(AddValidatorUsingAssemblies));
             return services;
         }
 

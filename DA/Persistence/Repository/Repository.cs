@@ -1,4 +1,5 @@
 using DA.Entities;
+using DA.Specifications;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Utility.Helpers.Common;
@@ -697,4 +698,13 @@ public class Repository<TEntity, TContext> : IRepository<TEntity, TContext>
 
         return items.ToDictionary(keySelector, valueSelector);
     }
+
+    public async Task<TEntity?> GetBySpecAsync(BaseSpecification<TEntity> spec, CancellationToken ct = default)
+        => await SpecificationEvaluator<TEntity>.GetQuery(_context.Set<TEntity>().AsQueryable(), spec).FirstOrDefaultAsync(ct);
+
+    public async Task<IReadOnlyList<TEntity>> ListBySpecAsync(BaseSpecification<TEntity> spec, CancellationToken ct = default)
+        => await SpecificationEvaluator<TEntity>.GetQuery(_context.Set<TEntity>().AsQueryable(), spec).ToListAsync(ct);
+
+    public async Task<int> CountBySpecAsync(BaseSpecification<TEntity> spec, CancellationToken ct = default)
+        => await SpecificationEvaluator<TEntity>.GetQuery(_context.Set<TEntity>().AsQueryable(), spec).CountAsync(ct);
  }

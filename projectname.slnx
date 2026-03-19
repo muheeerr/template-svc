@@ -1,0 +1,37 @@
+<Solution>
+  <Folder Name="/Auth/">
+    <Project Path="Auth/Auth.csproj" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="C:/Users/smuhe/Downloads/COPILOT_PROMPT_PHASE3.md" />
+    <File Path="docs/ARCHITECTURE-ANALYSIS.md" />
+    <File Path="docs/ARCHITECTURE_REVIEW.md" />
+    <File Path="docs/COPILOT_PROMPT_PHASE1_2.md" />
+  </Folder>
+  <Folder Name="/Host/">
+    <Project Path="projectname.Host/projectname.Host.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="Core/Core.csproj" />
+    <Project Path="DA/DA.csproj" Id="70836ed8-2493-440c-bb29-3b2e317fc57c" />
+    <Project Path="Infrastructure/Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="docker-compose.override.yml" />
+    <File Path="docker-compose.yml" />
+    <File Path="LICENSE.txt" />
+    <File Path="otel-collector.yaml" />
+    <File Path="README.md" />
+    <File Path="setup-template.ps1" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="projectname.Tests/projectname.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Utility/">
+    <Project Path="Utility/Utility.csproj" />
+  </Folder>
+</Solution>
+

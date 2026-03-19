@@ -51,7 +51,7 @@ This template provides a reasonable **starting skeleton** for a minimal API serv
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    __ProjectName__.Host                       │
+│                    projectname.Host                       │
 │  ┌─────────┐  ┌──────────┐  ┌───────────┐  ┌────────────┐  │
 │  │Program.cs│  │Resources │  │ConfigureApp│  │Middlewares │  │
 │  │(Entry)   │  │(DI Root) │  │(Pipeline)  │  │(Exception/ │  │
@@ -89,7 +89,7 @@ This template provides a reasonable **starting skeleton** for a minimal API serv
 ### Project Reference Graph
 
 ```
-__ProjectName__.Host
+projectname.Host
     ├──► Core.csproj
     │       ├──► DA.csproj
     │       │       └──► Utility.csproj
@@ -254,7 +254,7 @@ Program.cs
 
 ## 5. Layer-by-Layer Analysis
 
-### 5.1 Host Layer — `__ProjectName__.Host`
+### 5.1 Host Layer — `projectname.Host`
 
 **Files:** 12 files
 
@@ -450,7 +450,7 @@ The IV (Initialization Vector) is loaded once from configuration and reused for 
 
 ```csharp
 var DBhost = Environment.GetEnvironmentVariable("DBHost") 
-    ?? "Host=localhost;Port=5432;Database=__ProjectName__Db;Username=postgres;Password=postgres";
+    ?? "Host=localhost;Port=5432;Database=projectnameDb;Username=postgres;Password=postgres";
 ```
 
 **Impact:** Default `postgres/postgres` credentials in source code. If deployed without environment variables, this exposes the database.
@@ -577,7 +577,7 @@ Multiple files contain code specific to a "gate management" or "Oaken" system:
 | `Utility/Helpers/Common/Constant/KConstant.cs` | `ApiName = "Oaken"` |
 | `Utility/Helpers/Common/Constant/KConstant.cs` | `BarrierStatusClosedId`, `BarrierStatusOpenId` |
 | `Dockerfile` | References `Oaken.Host/Oaken.Host.csproj` |
-| `__ProjectName__.Host/Oaken.Host.http` | File left from previous project |
+| `projectname.Host/Oaken.Host.http` | File left from previous project |
 
 **Fix:** Remove all domain-specific code. A template should contain only generic examples.
 
@@ -1023,24 +1023,24 @@ DA/Enums/AccessLevelEnum.cs             → Domain-specific, delete
 DA/Enums/GuardStatus.cs                 → Domain-specific, delete
 Utility/GenericRepository/              → Entire directory (legacy duplicate)
 Utility/NATSNotificationSystem/NatsDummyProgram.cs → Dead code
-__ProjectName__.Host/Oaken.Host.http    → Left from previous project
-__ProjectName__.Host/Commands.txt       → Purpose unclear
-__ProjectName__.Host/Endpoints.cs       → Unused/unclear
+projectname.Host/Oaken.Host.http    → Left from previous project
+projectname.Host/Commands.txt       → Purpose unclear
+projectname.Host/Endpoints.cs       → Unused/unclear
 comment.txt                             → Testing artifact
 ```
 
 ### Files to HEAVILY REFACTOR
 
 ```
-__ProjectName__.Host/Extensions/Resources.cs     → Security fixes
-__ProjectName__.Host/Extensions/ConfigureApp.cs   → Pipeline reorder
-__ProjectName__.Host/Extensions/Validators/Validator.cs → Auth fixes
+projectname.Host/Extensions/Resources.cs     → Security fixes
+projectname.Host/Extensions/ConfigureApp.cs   → Pipeline reorder
+projectname.Host/Extensions/Validators/Validator.cs → Auth fixes
 Utility/Logger/SlackExceptionMethods.cs           → async void, HttpClient
 Utility/EmailSender/EmailService.cs               → Use MailKit
 DA/Persistence/Repository/Repository.cs           → 700+ lines, split
 Utility/Helpers/Auth/Models/UserPayload.cs        → required fields
 Utility/Helpers/Common/Constant/KConstant.cs      → Remove Oaken references
-__ProjectName__.Host/Dockerfile                    → Fix template references
+projectname.Host/Dockerfile                    → Fix template references
 ```
 
 ### Files That Are WELL-DESIGNED (Keep As-Is)
@@ -1053,8 +1053,8 @@ DA/Persistence/AppDbContext.cs              → Good conventions
 DA/Persistence/BaseContext.cs               → Clean user extraction
 Core/DependencyInjection.cs                 → Clean DI pattern
 Utility/EndpointController/IFeature.cs      → Simple, focused interface
-__ProjectName__.Host/Middlewares/GlobalExceptionHandlerMiddleware.cs → Well-structured
-__ProjectName__.Host/Extensions/OpenTelemetryExtensions.cs → Good OTEL setup
+projectname.Host/Middlewares/GlobalExceptionHandlerMiddleware.cs → Well-structured
+projectname.Host/Extensions/OpenTelemetryExtensions.cs → Good OTEL setup
 Utility/Helpers/ServiceCollectionExtensions/ValidatorExtensions.cs → Clever auto-registration
 ```
 
@@ -1075,3 +1075,4 @@ The estimated total effort for Phases 1 + 2 is approximately **5–8 engineering
 ---
 
 *Review generated with deep analysis of all 70+ source files across 4 project layers.*
+

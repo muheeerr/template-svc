@@ -18,7 +18,6 @@ namespace Utility.Logger
         public void LogError(string message, params object[] args)
         {
             logger.Error(message, args);
-            Console.WriteLine($"LogError:{message}, args:{args}");
         }
         public void LogErrors(Exception ex, string message, params object[] args)
         {

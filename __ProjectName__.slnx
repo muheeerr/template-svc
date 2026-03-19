@@ -9,7 +9,7 @@
     <File Path="docs/COPILOT_PROMPT_PHASE1_2.md" />
   </Folder>
   <Folder Name="/Host/">
-    <Project Path="__ProjectName__.Host/__ProjectName__.Host.csproj" />
+    <Project Path="projectname.Host/projectname.Host.csproj" />
   </Folder>
   <Folder Name="/Infrastructure/">
     <Project Path="Core/Core.csproj" />
@@ -22,7 +22,11 @@
     <File Path="README.md" />
     <File Path="setup-template.ps1" />
   </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="projectname.Tests/projectname.Tests.csproj" />
+  </Folder>
   <Folder Name="/Utility/">
     <Project Path="Utility/Utility.csproj" />
   </Folder>
 </Solution>
+

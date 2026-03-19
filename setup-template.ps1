@@ -26,6 +26,18 @@ if (Test-Path "$ProjectName.Host\__ProjectName__.Host.csproj") {
     Write-Host "Renamed Host project file" -ForegroundColor Green
 }
 
+# Rename Tests folder
+if (Test-Path "__ProjectName__.Tests") {
+    Rename-Item -Path "__ProjectName__.Tests" -NewName "$ProjectName.Tests"
+    Write-Host "Renamed Tests folder" -ForegroundColor Green
+}
+
+# Rename Tests project file
+if (Test-Path "$ProjectName.Tests\__ProjectName__.Tests.csproj") {
+    Rename-Item -Path "$ProjectName.Tests\__ProjectName__.Tests.csproj" -NewName "$ProjectName.Tests.csproj"
+    Write-Host "Renamed Tests project file" -ForegroundColor Green
+}
+
 # Replace placeholders in all files
 Write-Host "Replacing placeholders..." -ForegroundColor Yellow
 $files = Get-ChildItem -Recurse -File -Include *.cs,*.csproj,*.json,*.slnx,*.md | Where-Object { $_.FullName -notlike "*\bin\*" -and $_.FullName -notlike "*\obj\*" }

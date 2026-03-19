@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Serilog;
 
 namespace Utility.EmailSender
 {
@@ -23,7 +24,7 @@ namespace Utility.EmailSender
             
 
             services.TryAddSingleton<IEmailService>(x => new EmailService(senderEmail, senderPassword, smtpHost, int.Parse(smtpPort)));
-            Console.WriteLine($"[Info]----->{nameof(AddEmailSender)} service added");
+            Log.Information("[DI] {ServiceName} registered", nameof(AddEmailSender));
 
             return services;
         }
