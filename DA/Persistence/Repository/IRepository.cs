@@ -1,3 +1,4 @@
+using DA.Specifications;
 using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
 using Utility.Helpers.Common;
@@ -106,4 +107,9 @@ public interface IRepository<TEntity, TContext>
         CancellationToken cancellation = default) where TKey : notnull;
     Task<List<TEntity>> DeleteAsync(List<TEntity> entities, bool isDetached = false, CancellationToken cancellation = default);
     Task<bool> DeleteWithIdsAsync(List<Guid> entitieIds, CancellationToken cancellation = default);
+
+    // Specification-based queries
+    Task<TEntity?> GetBySpecAsync(BaseSpecification<TEntity> spec, CancellationToken ct = default);
+    Task<IReadOnlyList<TEntity>> ListBySpecAsync(BaseSpecification<TEntity> spec, CancellationToken ct = default);
+    Task<int> CountBySpecAsync(BaseSpecification<TEntity> spec, CancellationToken ct = default);
 }

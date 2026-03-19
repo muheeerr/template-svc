@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Grpc.Core;
 using Grpc.Net.Client;
+using Serilog;
 
 namespace Helpers.Singletons
 {
@@ -26,7 +27,7 @@ namespace Helpers.Singletons
 
         private Dictionary<string, GRPCEndpointsModel> InitializeEndpoints()
         {
-            Console.WriteLine($"GRPC endpoints loading in api");
+            Log.Information("[DI] gRPC endpoints loading");
             var endpointsDictionary = new Dictionary<string, GRPCEndpointsModel>();
             var envVariable = Environment.GetEnvironmentVariable("GRPCEndpoints")?? "parser,ai-srv.qbscocloud.net,32089,password123|UserManagement,ai-srv.qbscocloud.net,32090,password123|";
 
@@ -39,7 +40,7 @@ namespace Helpers.Singletons
             
             foreach (var endpoint in endpoints)
             {
-                Console.WriteLine($"{endpoint} loaded");
+                Log.Information("[DI] gRPC endpoint {Endpoint} loaded", endpoint);
                 var parts = endpoint.Split(',');
 
                 if (parts.Length != 4)

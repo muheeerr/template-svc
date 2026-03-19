@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -34,9 +35,15 @@ namespace Core.Endpoints
         public static IApplicationBuilder MapEndpoints(this WebApplication app, RouteGroupBuilder? routeGroupBuilder = null, string prefix = KConstant.ApiName)
         {
             IEnumerable<IFeature> endpoints = app.Services.GetRequiredService<IEnumerable<IFeature>>();
-            //var group = app.MapGroup($"/{prefix}");
 
             IEndpointRouteBuilder builder = routeGroupBuilder == null ? app : routeGroupBuilder;
+
+            var versionSet = builder.NewApiVersionSet()
+                .HasApiVersion(new ApiVersion(1, 0))
+                .HasApiVersion(new ApiVersion(2, 0))
+                .ReportApiVersions()
+                .Build();
+
             foreach (IFeature endpoint in endpoints)
             {
                 var featureInterface = endpoint.GetType().GetInterfaces()
@@ -46,7 +53,9 @@ namespace Core.Endpoints
                 var featureInterfaceName = featureInterface != null && featureInterface.Name.StartsWith("I") && featureInterface.Name.Length > 1
                     ? featureInterface.Name.Substring(1)
                     : featureInterface?.Name ?? endpoint.GetType().Name;
-                var group = builder.MapGroup($"/{featureInterfaceName}");
+                var group = builder
+                    .MapGroup($"/v{{version:apiVersion}}/{featureInterfaceName}")
+                    .WithApiVersionSet(versionSet);
                 endpoint.Map(group);
             }
 

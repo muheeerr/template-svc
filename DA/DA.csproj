@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
+	  <PackageReference Include="MimeKit" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\Utility\Utility.csproj" />
 	</ItemGroup>
 

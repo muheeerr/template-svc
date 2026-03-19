@@ -76,6 +76,26 @@ This will update all placeholders and file names to match your chosen project na
 ## Example Endpoints
 See `Core/Features/Example/ExampleFeatures.cs` for GET/POST endpoint patterns and validation.
 
+### Local Development with Docker Compose
+
+Start PostgreSQL, Redis, and Seq for local development:
+
+```bash
+docker compose up -d
+```
+
+To also run the API in Docker:
+
+```bash
+docker compose --profile app up -d
+```
+
+Stop all services:
+
+```bash
+docker compose down
+```
+
 ## Next Steps
 - Update environment variables in `Properties/launchSettings.json` as needed
 - Add new features by creating classes in `Core/Features/`

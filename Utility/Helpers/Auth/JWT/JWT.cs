@@ -6,7 +6,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Utility.Helpers.Auth.Models;
-using static Utility.Helpers.Auth.HTTPContextUserRetriever;
+using Utility.Helpers.Common.Auth;
 
 namespace Utility.Helpers.Auth.JWT
 {
@@ -73,10 +73,10 @@ namespace Utility.Helpers.Auth.JWT
         {
             return new ClaimsIdentity(new Claim[]
                             {
-                    new Claim(KAuthClaimTypes.Email, payload.Email),
-                    new Claim(KAuthClaimTypes.UserId,payload.UserId),
-                    new Claim(KAuthClaimTypes.UserType,payload.UserType),
-                    new Claim(KAuthClaimTypes.Resources,payload.RoleIds)
+                    new Claim(KAuthClaimTypes.Email, payload.Email ?? string.Empty),
+                    new Claim(KAuthClaimTypes.UserId, payload.UserId ?? string.Empty),
+                    new Claim(KAuthClaimTypes.UserType, payload.UserType ?? string.Empty),
+                    new Claim(KAuthClaimTypes.Resources, payload.RoleIds ?? string.Empty)
                             });
         }
 

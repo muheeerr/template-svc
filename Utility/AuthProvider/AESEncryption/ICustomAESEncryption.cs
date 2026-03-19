@@ -1,9 +1,8 @@
-﻿namespace Utility.AuthProvider.AESEncryption
+namespace Utility.AuthProvider.AESEncryption
 {
     public interface ICustomAESEncryption
     {
-        string Decrypt(byte[] cipherText);
-        byte[] Encrypt(string plainText);
-
+        string Decrypt(string cipherTextBase64);
+        string Encrypt(string plainText);
     }
 }

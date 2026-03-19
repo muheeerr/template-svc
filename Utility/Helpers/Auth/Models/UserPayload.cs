@@ -1,26 +1,32 @@
-namespace Utility.Helpers.Auth.Models
+namespace Utility.Helpers.Auth.Models;
+
+public class UserPayload
 {
-    public class UserPayload
-    {
-        public required string Email {  get; set; }
-        public required string UserId { get; set; }
-        public required string UserType { get; set; }
-        public required string SessionStartDate { get; set; }
-        public required string SessionEndDate { get; set; }
-        public string RoleIds { get; set; } 
+    public string? UserId { get; set; }
+    public string? Email { get; set; }
+    public string? UserType { get; set; }
+    public string? RoleIds { get; set; }
+    public string? SessionStartDate { get; set; }
+    public string? SessionEndDate { get; set; }
 
-    }
-    public class AccessAndRefreshTokens
-    {
-        public string AccessToken { get; set; }
-        public string RefreshToken { get; set; }
+    /// <summary>Returns true if the minimum required claims are present.</summary>
+    public bool IsValid() =>
+        !string.IsNullOrWhiteSpace(UserId) &&
+        !string.IsNullOrWhiteSpace(UserType);
+}
 
-    }
-    public static class KTokenValidity
-    {
-        public static int RefreshTokenInMin { get; set; } = 10;
-    }
-    public static class KConstantToken { 
+public class AccessAndRefreshTokens
+{
+    public string AccessToken { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
+}
+
+public static class KTokenValidity
+{
+    public static int RefreshTokenInMin { get; set; } = 10;
+}
+
+public static class KConstantToken
+{
     public static string Separator = ";";
-    }
 }

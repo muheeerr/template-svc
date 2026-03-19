@@ -1,6 +1,7 @@
 ﻿using DA;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace Core;
 
@@ -21,7 +22,7 @@ public static class DependencyInjection
             options.Assemblies = [typeof(DependencyInjection)];
         });
 
-        Console.WriteLine($"[Info]----->{nameof(AddBusinessLayer)} service added");
+        Log.Information("[DI] {ServiceName} registered", nameof(AddBusinessLayer));
         return services;
     }
 
@@ -30,7 +31,7 @@ public static class DependencyInjection
         // TODO: Register your scoped services here
         // Example: services.AddScoped<IYourService, YourService>();
 
-        Console.WriteLine($"[Info]----->{nameof(AddServices)} service added");
+        Log.Information("[DI] {ServiceName} registered", nameof(AddServices));
         return services;
     }
 }

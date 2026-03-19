@@ -1,0 +1,27 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  debug:
+    verbosity: detailed
+  otlphttp/seq:
+    endpoint: http://seq:5341/ingest/otlp
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers:  [otlp]
+      exporters:  [debug, otlphttp/seq]
+    metrics:
+      receivers:  [otlp]
+      exporters:  [debug, otlphttp/seq]
+    logs:
+      receivers:  [otlp]
+      exporters:  [debug, otlphttp/seq]

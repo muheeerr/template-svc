@@ -14,18 +14,32 @@ namespace Core.Features.Example;
 public class GetExample : IFeature
 {
     public record Response(string Message, DateTime Timestamp);
+    public record ResponseV2(string Message, DateTime Timestamp, string Version);
 
     public void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet(nameof(GetExample), Handle)
+        app.MapGet(nameof(GetExample), HandleV1)
+           .MapToApiVersion(1, 0)
            .WithTags("Example")
            .WithDescription("Example GET endpoint")
            .Produces<Response>(StatusCodes.Status200OK);
+
+        app.MapGet(nameof(GetExample), HandleV2)
+           .MapToApiVersion(2, 0)
+           .WithTags("Example")
+           .WithDescription("Example GET endpoint v2")
+           .Produces<ResponseV2>(StatusCodes.Status200OK);
     }
 
-    private static IResult Handle()
+    private static IResult HandleV1()
     {
         var response = new Response("Hello from template!", DateTime.UtcNow);
+        return Results.Ok(ApiResponseHelper.Success(response, "Success"));
+    }
+
+    private static IResult HandleV2()
+    {
+        var response = new ResponseV2("Hello from template!", DateTime.UtcNow, "v2");
         return Results.Ok(ApiResponseHelper.Success(response, "Success"));
     }
 }

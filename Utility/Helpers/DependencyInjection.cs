@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Serilog;
 using System.Reflection;
 
 namespace Utility.Helpers
@@ -20,7 +21,7 @@ namespace Utility.Helpers
         public static IServiceCollection AddHelpers(this IServiceCollection services, IConfiguration configuration)
         {
             services.TryAddSingleton<IRead, Config>();
-            Console.WriteLine($"[Info]----->{nameof(AddHelpers)} service added");
+            Log.Information("[DI] {ServiceName} registered", nameof(AddHelpers));
             return services;
         }
     }

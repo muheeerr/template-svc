@@ -1,5 +1,6 @@
 ﻿using Helpers.Singletons;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using Utility.Helpers.Singleton.NotificationSender;
 
 namespace Utility.Helpers.Singleton
@@ -12,7 +13,7 @@ namespace Utility.Helpers.Singleton
             var instance = NotificationSingleton.Instance;
             var grpcEndpoints = ReadGRPCEndpoints.Instance;
             instance.Initialize(grpcEndpoints);
-            Console.WriteLine("notification is configured");
+            Log.Information("[DI] Notification singleton configured");
             services.AddSingleton<NotificationSingleton>(instance);
             
             return services;

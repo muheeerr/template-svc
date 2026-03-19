@@ -1,0 +1,36 @@
+# Optional: Uncomment to run the API in Docker alongside dependencies
+# Usage: docker compose --profile app up
+services:
+  api:
+    build:
+      context: .
+      dockerfile: projectname.Host/Dockerfile
+    container_name: projectname-api
+    profiles: ["app"]
+    ports:
+      - "5088:5088"
+      - "5087:5087"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DBHost: "Host=postgres;Port=5432;Database=projectnameDev;Username=postgres;Password=postgres"
+      RedisHost: "redis:6379"
+      JWT_KEY: "dev-only-change-this-key-min-32-chars!!"
+      JWT_ISSUER: "https://localhost:7087"
+      JWT_AUDIENCE: "template-svc-dev"
+      SenderEmail: "dev-sender@yourdomain.com"
+      SenderPassword: "dev-smtp-password"
+      SMTP_HOST: "mailpit"
+      SMTP_PORT: "1025"
+      AES_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      ALLOWED_ORIGINS: "https://localhost:3000,https://localhost:5173"
+      SEQ_URL: "http://seq:5341"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      OTEL_SERVICE_NAME: "projectname"
+      OTEL_SERVICE_VERSION: "1.0.0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
