@@ -1,5 +1,9 @@
 <Solution>
+  <Folder Name="/Auth/">
+    <Project Path="Auth/Auth.csproj" />
+  </Folder>
   <Folder Name="/docs/">
+    <File Path="C:/Users/smuhe/Downloads/COPILOT_PROMPT_PHASE3.md" />
     <File Path="docs/ARCHITECTURE-ANALYSIS.md" />
     <File Path="docs/ARCHITECTURE_REVIEW.md" />
     <File Path="docs/COPILOT_PROMPT_PHASE1_2.md" />
@@ -10,6 +14,7 @@
   <Folder Name="/Infrastructure/">
     <Project Path="Core/Core.csproj" />
     <Project Path="DA/DA.csproj" Id="70836ed8-2493-440c-bb29-3b2e317fc57c" />
+    <Project Path="Infrastructure/Infrastructure.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path="Directory.Build.props" />

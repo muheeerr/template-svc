@@ -19,8 +19,8 @@ public static class DependencyInjection
     public static IServiceCollection AddDbContext(this IServiceCollection services, IConfiguration configuration)
     {
 
-        var DBhost = Environment.GetEnvironmentVariable("DBHost") ?? "Host=localhost;Port=5432;Database=__ProjectName__Db;Username=postgres;Password=postgres";
-        ArgumentException.ThrowIfNullOrEmpty(DBhost, "please add env:DBhost value");
+        var DBhost = Environment.GetEnvironmentVariable("DBHost");
+        ArgumentException.ThrowIfNullOrWhiteSpace(DBhost, "DBHost environment variable is required.");
 
         services.AddDbContext<AppDbContext>(
             options => options.UseNpgsql(DBhost)

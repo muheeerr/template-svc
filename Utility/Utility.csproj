@@ -34,6 +34,9 @@
 
 		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+
+		<PackageReference Include="MailKit" />
+		<PackageReference Include="MimeKit" />
 	</ItemGroup>
 
 	<ItemGroup>

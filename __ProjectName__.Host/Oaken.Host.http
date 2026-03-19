@@ -1,6 +1,0 @@
-@Oaken.Host_HostAddress = http://localhost:5007
-
-GET {{Oaken.Host_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

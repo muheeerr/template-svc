@@ -8,6 +8,8 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+ValidateRequiredEnvironmentVariables();
+
 builder.Host.UseSerilog((context, config) =>
 {
     config.ReadFrom.Configuration(context.Configuration);
@@ -38,7 +40,6 @@ var app = builder.Build();
 
 await app.Configure();
 
-
 app.UseSerilogRequestLogging(options =>
 {
     options.GetLevel = (httpContext, elapsed, exception) =>
@@ -53,6 +54,23 @@ app.UseSerilogRequestLogging(options =>
     };
 });
 
-
 app.MapGet("health/live", () => Results.Ok("Alive"));
 app.Run();
+
+static void ValidateRequiredEnvironmentVariables()
+{
+    var required = new[]
+    {
+        "JWT_KEY", "JWT_ISSUER", "JWT_AUDIENCE",
+        "DBHost", "SenderEmail", "SenderPassword",
+        "AES_KEY", "ALLOWED_ORIGINS"
+    };
+
+    var missing = required
+        .Where(k => string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(k)))
+        .ToList();
+
+    if (missing.Count > 0)
+        throw new InvalidOperationException(
+            $"Missing required environment variables: {string.Join(", ", missing)}");
+}

@@ -1,6 +1,6 @@
-﻿using StackExchange.Redis;
+using StackExchange.Redis;
 
-namespace Utility.SessionManager
+namespace Infrastructure.Redis
 {
     public class RedisSessionManager
     {

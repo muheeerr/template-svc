@@ -1,106 +1,53 @@
-﻿using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace Utility.AuthProvider.AESEncryption
 {
-    public class CustomAESEncryption:ICustomAESEncryption
+    public class CustomAESEncryption : ICustomAESEncryption
     {
-        readonly  string customKey;
-        readonly string customIV;
-        readonly string _aes;
-        readonly CipherMode encryptionMode;
-        readonly PaddingMode paddingMode;
-        readonly Aes myAes;
-        public CustomAESEncryption(IConfiguration configuration)
+        private readonly byte[] _key;
+
+        public CustomAESEncryption()
         {
-            string? secretKey = configuration.GetSection("TOTP:Key").Value;
-            string? ivString = configuration.GetSection("TOTP:IV").Value;
-            ArgumentNullException.ThrowIfNull(secretKey, nameof(secretKey));
-            ArgumentNullException.ThrowIfNull(ivString, nameof(ivString));
-            customKey = secretKey;
-            customIV = ivString;
-            encryptionMode = CipherMode.CBC;
-            paddingMode= PaddingMode.PKCS7;
-            myAes = Aes.Create();
-            myAes.Key = Encoding.UTF8.GetBytes(customKey); ;
-            myAes.IV = Encoding.UTF8.GetBytes(customIV);
-            myAes.Mode = encryptionMode;
-            myAes.Padding = paddingMode;
-        }
-        public byte[] Encrypt(string plainText)
-        {
-            if (plainText == null || plainText.Length <= 0)
-                throw new ArgumentNullException(nameof(plainText));
-            byte[] encrypted;
-
-
-            using (Aes aesAlg = Aes.Create())
-            {
-                aesAlg.Key = myAes.Key;
-                aesAlg.IV = myAes.IV;
-                aesAlg.Mode = myAes.Mode;
-                aesAlg.Padding = myAes.Padding;
-
-
-                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-
-
-                using (MemoryStream msEncrypt = new MemoryStream())
-                {
-                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-                    {
-                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
-                        {
-
-                            swEncrypt.Write(plainText);
-                        }
-                    }
-
-                    encrypted = msEncrypt.ToArray();
-                }
-            }
-
-
-            return encrypted;
+            var aesKey = Environment.GetEnvironmentVariable("AES_KEY");
+            ArgumentException.ThrowIfNullOrWhiteSpace(aesKey, "AES_KEY environment variable is required.");
+            _key = Convert.FromBase64String(aesKey);
         }
 
-        public string Decrypt(byte[] cipherText)
+        public string Encrypt(string plainText)
         {
-            // Check arguments.
-            if (cipherText == null || cipherText.Length <= 0)
-                throw new ArgumentNullException(nameof(cipherText));
-           
+            ArgumentException.ThrowIfNullOrWhiteSpace(plainText);
 
+            using var aes = Aes.Create();
+            aes.Key = _key;
+            aes.GenerateIV();
 
-            string plaintext = null;
+            using var encryptor = aes.CreateEncryptor();
+            var plainBytes = Encoding.UTF8.GetBytes(plainText);
+            var cipherBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
 
+            // Prepend IV: [16-byte IV][ciphertext]
+            var result = new byte[aes.IV.Length + cipherBytes.Length];
+            Buffer.BlockCopy(aes.IV, 0, result, 0, aes.IV.Length);
+            Buffer.BlockCopy(cipherBytes, 0, result, aes.IV.Length, cipherBytes.Length);
+            return Convert.ToBase64String(result);
+        }
 
-            using (Aes aesAlg = Aes.Create())
-            {
-                aesAlg.Key = myAes.Key;
-                aesAlg.IV = myAes.IV;
-                aesAlg.Mode = myAes.Mode;
-                aesAlg.Padding = myAes.Padding;
+        public string Decrypt(string cipherTextBase64)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(cipherTextBase64);
 
+            var fullBytes = Convert.FromBase64String(cipherTextBase64);
+            var iv = fullBytes[..16];
+            var cipher = fullBytes[16..];
 
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+            using var aes = Aes.Create();
+            aes.Key = _key;
+            aes.IV = iv;
 
-
-                using (MemoryStream msDecrypt = new MemoryStream(cipherText))
-                {
-                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
-                    {
-                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
-                        {
-
-                            plaintext = srDecrypt.ReadToEnd();
-                        }
-                    }
-                }
-            }
-
-            return plaintext;
+            using var decryptor = aes.CreateDecryptor();
+            var plain = decryptor.TransformFinalBlock(cipher, 0, cipher.Length);
+            return Encoding.UTF8.GetString(plain);
         }
     }
 }

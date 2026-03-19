@@ -3,7 +3,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 
-namespace Utility.Helpers
+namespace Infrastructure.S3
 {
     public class S3Helper
     {

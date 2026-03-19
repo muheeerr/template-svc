@@ -3,12 +3,12 @@ using Core.Endpoints;
 using Core.Features;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using __ProjectName__.Host.Extensions.Validators;
 using __ProjectName__.Host.Middlewares;
 using StackExchange.Redis;
 using System.Reflection;
-using System.Runtime;
+using System.Threading.RateLimiting;
 using Utility.EmailSender;
 using Utility.EndpointController;
 using Utility.EndpointExposerGRPC.ResourceAndConfigMap;
@@ -19,8 +19,7 @@ using Utility.Helpers.Common.Auth;
 using Utility.Helpers.Common.Auth.Requirements;
 using Utility.Helpers.ServiceCollectionExtensions;
 using Utility.Logger;
-using Utility.NATSNotificationSystem;
-using Utility.SessionManager;
+using Infrastructure.Redis;
 
 namespace __ProjectName__.Host.Extensions
 {
@@ -32,31 +31,46 @@ namespace __ProjectName__.Host.Extensions
 
             var featureType = typeof(IFeature);
             string validatorName = "RequestValidator";
-            services
 
-            //.AddCustomLogger(configuration)
+            var allowedOrigins = (Environment.GetEnvironmentVariable("ALLOWED_ORIGINS") ?? "")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (allowedOrigins.Length == 0)
+                throw new InvalidOperationException("ALLOWED_ORIGINS must contain at least one origin.");
+
+            services
             .AddRedisSessionManager(configuration)
             .AddEndpoints()
-            //.AddSwagger(KConstant.ApiName)
             .AddMiddlewares()
-            //TODO: AddServicesLayers
             .AddAuthDI(configuration)
             .AddBusinessLayer(configuration)
             .AddHelpers(configuration)
-            .AddNatsService(configuration)
             .AddValidatorUsingAssemblies(assemblies, featureType, validatorName, typeof(IValidator<>))
             .AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins(allowedOrigins)
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
-
+                          .AllowAnyHeader()
+                          .AllowCredentials();
                 });
-            }).AddMetrics()
+            })
+            .AddMetrics()
             .AddEmailSender(configuration)
-            ;
+            .AddRateLimiter(options =>
+            {
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 100,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0
+                        }));
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            });
+
             Console.WriteLine($"[Info]----->all {nameof(RegisterService)} done");
             services.AddGrpc();
 
@@ -79,15 +93,19 @@ namespace __ProjectName__.Host.Extensions
 
         public static IServiceCollection AddRedisSessionManager(this IServiceCollection services, IConfiguration configuration)
         {
-
-            var RedisHost = Environment.GetEnvironmentVariable("RedisHost") ?? "localhost:6379";
-            ArgumentNullException.ThrowIfNullOrEmpty(RedisHost, "please add env:RedisHost value");
-
+            var redisHost = Environment.GetEnvironmentVariable("RedisHost");
+            ArgumentException.ThrowIfNullOrWhiteSpace(redisHost, "RedisHost environment variable is required.");
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
-                var configurationOptions = ConfigurationOptions.Parse(RedisHost, true);
-                return ConnectionMultiplexer.Connect(configurationOptions);
+                var redisHost = Environment.GetEnvironmentVariable("RedisHost");
+                ArgumentException.ThrowIfNullOrWhiteSpace(redisHost);
+
+                var options = ConfigurationOptions.Parse(redisHost);
+                options.AbortOnConnectFail = false;
+                options.ConnectRetry = 5;
+
+                return ConnectionMultiplexer.Connect(options);
             });
 
             services.AddScoped<RedisSessionManager>();
@@ -102,47 +120,32 @@ namespace __ProjectName__.Host.Extensions
             return services;
         }
 
-        private static IServiceCollection AddSwagger(this IServiceCollection services, string pTitle)
-        {
-            //services.AddEndpointsApiExplorer();
-            //services.AddSwaggerGen(options =>
-            //{
-            //    options.SwaggerDoc("v1", new OpenApiInfo()
-            //    {
-            //        Title = pTitle,
-            //        Version = "v1",
-            //    });
 
-            //    options.CustomSchemaIds(type => type.FullName?.Replace('+', '.'));
-            //    options.InferSecuritySchemes();
-            //});
-            Console.WriteLine($"[Info]----->{nameof(AddSwagger)} service added");
-            return services;
-
-        }
         public static IServiceCollection AddAuthDI(this IServiceCollection services, IConfiguration configuration)
         {
+            var key = Environment.GetEnvironmentVariable("JWT_KEY");
+            ArgumentException.ThrowIfNullOrWhiteSpace(key, "JWT_KEY environment variable is required.");
 
-            var Key = Environment.GetEnvironmentVariable("JWT_KEY") ?? "asdavvasd132132131231232312312dsadasdsdsdsds@asd112";
-            var Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "localhost";
-            var Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "localhost";
-            var AccessTokenExpirationInMinutes = int.Parse(Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRATION_IN_MINUTES") ?? "10");
-            var RefreshTokenExpirationInDays = int.Parse(Environment.GetEnvironmentVariable("JWT_REFRESH_TOKEN_EXPIRATION_IN_DAYS") ?? "10");
+            var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+            ArgumentException.ThrowIfNullOrWhiteSpace(issuer, "JWT_ISSUER environment variable is required.");
 
+            var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+            ArgumentException.ThrowIfNullOrWhiteSpace(audience, "JWT_AUDIENCE environment variable is required.");
+
+            var accessTokenExpirationInMinutes = int.Parse(Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRATION_IN_MINUTES") ?? "10");
+            var refreshTokenExpirationInDays = int.Parse(Environment.GetEnvironmentVariable("JWT_REFRESH_TOKEN_EXPIRATION_IN_DAYS") ?? "10");
 
             services.Configure<JwtOptions>(options =>
             {
-                options.Key = Key;
-                options.Issuer = Issuer;
-                options.Audience = Audience;
-                options.AccessTokenExpirationInMinutes = AccessTokenExpirationInMinutes;
-                options.RefreshTokenExpirationInDays = RefreshTokenExpirationInDays;
+                options.Key = key;
+                options.Issuer = issuer;
+                options.Audience = audience;
+                options.AccessTokenExpirationInMinutes = accessTokenExpirationInMinutes;
+                options.RefreshTokenExpirationInDays = refreshTokenExpirationInDays;
             });
 
-
             services
-
-            .AddJwtValidator(configuration, Key, Issuer, Audience)
+            .AddJwtValidator(configuration, key, issuer, audience)
             .AddCustomAuthorization();
 
             services.AddTransient<Jwt>();
@@ -152,12 +155,10 @@ namespace __ProjectName__.Host.Extensions
 
         private static IServiceCollection AddCustomAuthorization(this IServiceCollection services)
         {
-
             services.AddHttpContextAccessor();
 
             services.AddAuthorization(options =>
             {
-                // options.AddPolicy(KPolicyDescriptor.SuperAdminPolicy, policy=>policy.RequireAuthenticatedUser());
                 options.AddPolicy(KPolicyDescriptor.CustomPolicy, policy => policy.RequireAuthenticatedUser()
                 .AddRequirements(new CustomAuthorizationRequirement()));
             });
@@ -168,38 +169,6 @@ namespace __ProjectName__.Host.Extensions
                 var jwt = sp.GetRequiredService<Jwt>();
                 return (user) => jwt.GenerateToken(user);
             });
-            /* services.AddAuthorization(options =>
-             {
-                 options.AddPolicy(KPolicyDescriptor.SuperAdminPolicy, policy =>
-                 {
-                     policy.RequireAssertion(context =>
-                     {
-                         // Ensure the Resource is an HttpContext
-                         if (context.Resource is HttpContext httpContext)
-                         {
-                             var roleManager = httpContext.RequestServices.GetRequiredService<RoleManager<IdentityRole>>();
-                             var userRoles = context.User.FindAll(ClaimTypes.Role).Select(r => r.Value);
-
-                             foreach (var role in userRoles)
-                             {
-                                 var roleEntity = roleManager.FindByNameAsync(role).Result;
-                                 if (roleEntity != null)
-                                 {
-                                     *//*var rolePolicies = roleEntity.Policies; // Assuming roleEntity has a Policies property
-
-                                     if (rolePolicies.Any(p => p.Name == "RequiredPolicy"))
-                                     {
-                                         return true;
-                                     }*//*
-                                     return true;
-                                 }
-                             }
-                         }
-
-                         return false;
-                     });
-                 });
-             });*/
             return services;
         }
     }

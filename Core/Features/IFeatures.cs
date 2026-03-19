@@ -1,16 +1,10 @@
-﻿using Utility.EndpointController;
+using Utility.EndpointController;
 
-namespace Core.Features
-{
-    internal interface IEmployee : IFeature;
-    internal interface IBarier : IFeature;
-    internal interface IGuard : IFeature;
-    internal interface IVisitor : IFeature;
-    internal interface IQrCode : IFeature;
-    internal interface IShift : IFeature;
-    internal interface IAccess : IFeature;
-    internal interface IProximity : IFeature;
-    internal interface IDashboard : IFeature;
-    internal interface IMasterData : IFeature;
-    internal interface IFileUpload : IFeature;
-}
+namespace Core.Features;
+
+/// <summary>
+/// Marker interfaces for feature grouping. Implement a sub-interface per feature domain.
+/// Routes will be grouped under /{InterfaceName} (minus the 'I' prefix).
+/// Example: IUserFeature → routes grouped under /UserFeature
+/// </summary>
+public interface IExample : IFeature;

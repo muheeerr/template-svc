@@ -1,7 +1,6 @@
 ﻿using Utility.Helpers.Auth.Models;
 using Utility.Helpers.Auth;
 using Utility.Helpers.Common;
-using Utility.CustomHTTP;
 
 namespace __ProjectName__.Host.Middlewares
 {
@@ -19,15 +18,24 @@ namespace __ProjectName__.Host.Middlewares
         {
             var payload = HTTPContextUserRetriever.GetUserPayloadFromClaims(context.User);
             userContext.Data = payload;
-            if (payload != null && DateTime.TryParse(payload.SessionStartDate, out DateTime time) && time > DateTime.UtcNow)
+
+            if (context.User.Identity?.IsAuthenticated == true && payload != null && !payload.IsValid())
             {
-                await context.Response.WriteAsJsonAsync(ApiResponseHelper.Convert(true, false, $"Session will be start after {time}", HTTPStatusCode400.Forbidden, new object()));
-            }
-            else
-            {
-                await _next(context);
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(
+                    ApiResponseHelper.Failure("Invalid or incomplete JWT claims.", 401));
+                return;
             }
 
+            if (payload != null && DateTime.TryParse(payload.SessionStartDate, out DateTime time) && time > DateTime.UtcNow)
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsJsonAsync(
+                    ApiResponseHelper.Convert(true, false, $"Session will start after {time}", StatusCodes.Status403Forbidden, new object()));
+                return;
+            }
+
+            await _next(context);
         }
     }
 
