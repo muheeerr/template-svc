@@ -1,4 +1,5 @@
-﻿using DA.Persistence;
+﻿using DA.Auditing;
+using DA.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,9 @@ public static class DependencyInjection
         services
             .AddDbContext(configuration)
             .AddUOW();
+
+        // Audit logger
+        services.AddScoped<IAuditLogger, DbAuditLogger>();
 
         // Auto-register all IDataSeeder implementations
         var seederTypes = System.Reflection.Assembly.GetExecutingAssembly()
@@ -36,7 +40,8 @@ public static class DependencyInjection
                 npgsqlOpts.EnableRetryOnFailure(
                     maxRetryCount: 5,
                     maxRetryDelay: TimeSpan.FromSeconds(10),
-                    errorCodesToAdd: null)));
+                    errorCodesToAdd: null))
+                .UseSnakeCaseNamingConvention());
         return services;
     }
     public static IServiceCollection AddUOW(this IServiceCollection services)

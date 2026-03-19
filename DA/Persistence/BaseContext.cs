@@ -11,14 +11,6 @@ namespace DA.Persistence
             : base(options)
         {
         }
-        
-        private static readonly string[] EmailClaimTypes =
-        {
-            ClaimTypes.Email,
-            "email",
-            "Email",
-            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-        };
 
         public string GetUserName()
         {
@@ -27,13 +19,10 @@ namespace DA.Persistence
             if (httpContext?.User?.Identity?.IsAuthenticated != true)
                 return "SYSTEM";
 
-            var user = httpContext.User;
+            var email = httpContext.User.FindFirst(ClaimTypes.Email)?.Value
+                     ?? httpContext.User.FindFirst("email")?.Value;
 
-            var email = EmailClaimTypes
-                .Select(type => user.FindFirst(type)?.Value)
-                .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
-
-            return email ?? "SYSTEM";
+            return string.IsNullOrWhiteSpace(email) ? "SYSTEM" : email;
         }
     }
 }

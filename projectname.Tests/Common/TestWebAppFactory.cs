@@ -12,17 +12,33 @@ namespace projectname.Tests.Common;
 public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+        .WithImage("postgres:17-alpine")
         .WithDatabase("testdb")
         .WithUsername("testuser")
         .WithPassword("testpass")
         .Build();
 
-    private readonly RedisContainer _redis = new RedisBuilder().Build();
+    private readonly RedisContainer _redis = new RedisBuilder()
+        .WithImage("redis:7-alpine")
+        .Build();
 
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
         await _redis.StartAsync();
+
+        // Set env vars BEFORE the host starts (ValidateRequiredEnvironmentVariables runs at startup)
+        Environment.SetEnvironmentVariable("DBHost", _postgres.GetConnectionString());
+        Environment.SetEnvironmentVariable("RedisHost", _redis.GetConnectionString());
+        Environment.SetEnvironmentVariable("JWT_KEY", "test-jwt-key-minimum-32-characters!!");
+        Environment.SetEnvironmentVariable("JWT_ISSUER", "https://test-issuer");
+        Environment.SetEnvironmentVariable("JWT_AUDIENCE", "test-audience");
+        Environment.SetEnvironmentVariable("ALLOWED_ORIGINS", "https://localhost:3000");
+        Environment.SetEnvironmentVariable("SenderEmail", "test@test.com");
+        Environment.SetEnvironmentVariable("SenderPassword", "test-password");
+        Environment.SetEnvironmentVariable("AES_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+        Environment.SetEnvironmentVariable("SMTP_HOST", "localhost");
+        Environment.SetEnvironmentVariable("SMTP_PORT", "1025");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -35,18 +51,6 @@ public class TestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
             services.AddDbContext<AppDbContext>(opts =>
                 opts.UseNpgsql(_postgres.GetConnectionString()));
-
-            Environment.SetEnvironmentVariable("DBHost", _postgres.GetConnectionString());
-            Environment.SetEnvironmentVariable("RedisHost", _redis.GetConnectionString());
-            Environment.SetEnvironmentVariable("JWT_KEY", "test-jwt-key-minimum-32-characters!!");
-            Environment.SetEnvironmentVariable("JWT_ISSUER", "https://test-issuer");
-            Environment.SetEnvironmentVariable("JWT_AUDIENCE", "test-audience");
-            Environment.SetEnvironmentVariable("ALLOWED_ORIGINS", "https://localhost:3000");
-            Environment.SetEnvironmentVariable("SenderEmail", "test@test.com");
-            Environment.SetEnvironmentVariable("SenderPassword", "test-password");
-            Environment.SetEnvironmentVariable("AES_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
-            Environment.SetEnvironmentVariable("SMTP_HOST", "localhost");
-            Environment.SetEnvironmentVariable("SMTP_PORT", "1025");
         });
     }
 

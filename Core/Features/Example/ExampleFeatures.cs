@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Utility.EndpointController;
 using Utility.Helpers.Common;
 
@@ -22,7 +23,8 @@ public class GetExample : IFeature
            .MapToApiVersion(1, 0)
            .WithTags("Example")
            .WithDescription("Example GET endpoint")
-           .Produces<Response>(StatusCodes.Status200OK);
+           .Produces<Response>(StatusCodes.Status200OK)
+           .CacheOutput(p => p.Expire(TimeSpan.FromMinutes(5)).Tag("example"));
 
         app.MapGet(nameof(GetExample), HandleV2)
            .MapToApiVersion(2, 0)

@@ -1,19 +1,20 @@
-﻿using DA.Entities;
+﻿using DA.Auditing;
+using DA.Entities;
+using DA.Events;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Linq.Expressions;
 using System.Reflection;
 
 
 namespace DA.Persistence
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> dbContextOptions) : BaseContext(dbContextOptions)
+    public class AppDbContext(DbContextOptions<AppDbContext> dbContextOptions, IServiceProvider? serviceProvider = null) : BaseContext(dbContextOptions)
     {
-        // TODO: Add your DbSet properties here
-        // Example: public DbSet<YourEntity> YourEntities { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // modelBuilder.HasDefaultSchema("pharmacy");
             modelBuilder.HasPostgresExtension("uuid-ossp");
             modelBuilder.HasPostgresExtension("pgcrypto");
 
@@ -21,28 +22,20 @@ namespace DA.Persistence
             {
                 var entity = modelBuilder.Entity(entityType.ClrType);
 
-                //Configure Id property for UUID v7
-
+                // Configure Id property for UUID v7
                 var idProperty = entityType.FindProperty(nameof(Entity.Id));
                 if (idProperty != null)
                 {
                     entity.Property(nameof(Entity.Id))
                         .HasColumnType("uuid")
-                        .HasDefaultValueSql("uuid_generate_v7()")
-                        .HasColumnName("id");
+                        .HasDefaultValueSql("uuid_generate_v7()");
                 }
 
-                entityType.SetTableName(ToSnakeCase(entityType.GetTableName()!));
-                foreach (var property in entityType.GetProperties())
-                {
-                    property.SetColumnName(ToSnakeCase(property.Name));
-                }
                 // Set default values for specific properties
                 var isDeletedProperty = entityType.FindProperty(nameof(Entity.IsDeleted));
                 if (isDeletedProperty != null)
                 {
                     isDeletedProperty.SetDefaultValue(false);
-                    // Implement query filter if necessary
                     entity.HasQueryFilter(BuildIsDeletedFilter(entityType.ClrType));
                 }
 
@@ -50,13 +43,13 @@ namespace DA.Persistence
                 isActiveProperty?.SetDefaultValue(true);
                 if (isActiveProperty != null)
                 {
-                    // Implement query filter if necessary
                     entity.HasQueryFilter(BuildIsActiveFilter(entityType.ClrType));
                 }
+
                 var createdDateProperty = entityType.FindProperty(nameof(Entity.CreatedAt));
                 createdDateProperty?.SetDefaultValueSql("CURRENT_TIMESTAMP(6)");
-
             }
+
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
@@ -68,6 +61,7 @@ namespace DA.Persistence
             var body = Expression.Equal(propertyExpression, Expression.Constant(false));
             return Expression.Lambda(body, parameter);
         }
+
         private static LambdaExpression BuildIsActiveFilter(Type entityType)
         {
             var parameter = Expression.Parameter(entityType, "e");
@@ -92,73 +86,51 @@ namespace DA.Persistence
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             HandleAuditing();
-            return await base.SaveChangesAsync(cancellationToken);
+
+            // Collect domain events before saving (entities may be detached after save)
+            var entitiesWithEvents = ChangeTracker.Entries<Entity>()
+                .Where(e => e.Entity.DomainEvents.Count > 0)
+                .Select(e => e.Entity)
+                .ToList();
+            var domainEvents = entitiesWithEvents.SelectMany(e => e.DomainEvents).ToList();
+            foreach (var entity in entitiesWithEvents)
+                entity.ClearDomainEvents();
+
+            var result = await base.SaveChangesAsync(cancellationToken);
+
+            // Dispatch domain events after successful save
+            if (domainEvents.Count > 0 && serviceProvider is not null)
+            {
+                using var scope = serviceProvider.CreateScope();
+                var dispatchers = scope.ServiceProvider.GetServices<DA.Events.IDomainEventDispatcher>();
+                foreach (var dispatcher in dispatchers)
+                    await dispatcher.DispatchAsync(domainEvents, cancellationToken);
+            }
+
+            return result;
         }
 
         private void HandleAuditing()
         {
-            foreach (var entry in ChangeTracker.Entries())
-            {
-                var entity = entry.Entity;
-                if (entity == null) continue;
+            var username = GetUserName();
+            var now = DateTimeOffset.UtcNow;
 
-                var type = entity.GetType();
-                var username = GetUserName();
-                var now = DateTimeOffset.UtcNow;
+            foreach (var entry in ChangeTracker.Entries<IAuditable>())
+            {
                 if (entry.State == EntityState.Added)
                 {
-                    SetIfNullOrEmpty(type, entity, nameof(Entity.CreatedBy), username);
-                    SetIfDefault(type, entity, nameof(Entity.CreatedAt), now);
+                    if (string.IsNullOrWhiteSpace(entry.Entity.CreatedBy))
+                        entry.Entity.CreatedBy = username;
+                    if (entry.Entity.CreatedAt == default)
+                        entry.Entity.CreatedAt = now;
                 }
 
                 if (entry.State == EntityState.Modified)
                 {
-                    SetIfNullOrEmpty(type, entity, nameof(Entity.UpdatedBy), username);
-                    SetIfDefault(type, entity, nameof(Entity.UpdatedAt), now);
-                }
-                var properties = entity.GetType().GetProperties()
-                    .Where(p => p.PropertyType == typeof(DateTime) || p.PropertyType == typeof(DateTime?) ||
-                    p.PropertyType == typeof(DateTimeOffset?) || p.PropertyType == typeof(DateTimeOffset));
-
-                foreach (var property in properties)
-                {
-                    if (property.GetValue(entity) is DateTimeOffset dateTime)
-                    {
-                        property.SetValue(entity, dateTime.ToUniversalTime());
-                    }
+                    entry.Entity.UpdatedBy = username;
+                    entry.Entity.UpdatedAt = now;
                 }
             }
-        }
-        private void SetIfNullOrEmpty(Type type, object entity, string propertyName, string value)
-        {
-            var prop = type.GetProperty(propertyName);
-            if (prop != null && prop.CanWrite && prop.PropertyType == typeof(string))
-            {
-                var currentValue = prop.GetValue(entity) as string;
-                //if (string.IsNullOrWhiteSpace(currentValue))
-                {
-                    prop.SetValue(entity, value);
-                }
-            }
-        }
-
-        private void SetIfDefault(Type type, object entity, string propertyName, DateTimeOffset value)
-        {
-            var prop = type.GetProperty(propertyName);
-            if (prop != null && prop.CanWrite 
-                && (prop.PropertyType == typeof(DateTime) || prop.PropertyType == typeof(DateTimeOffset)))
-            {
-                var currentValue = prop.GetValue(entity)!;
-                    prop.SetValue(entity, value);
-            }
-        }
-        private static string ToSnakeCase(string input)
-        {
-            return string.Concat(
-                input.Select((ch, i) =>
-                    i > 0 && char.IsUpper(ch) ? "_" + ch : ch.ToString()
-                )
-            ).ToLower();
         }
     }
 }

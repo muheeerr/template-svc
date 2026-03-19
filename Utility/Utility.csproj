@@ -20,12 +20,7 @@
 		<!--ef core-->
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
 		<PackageReference Include="Microsoft.OpenApi" />
-		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
-		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
-
 		<PackageReference Include="Serilog.Sinks.File" />
-
-		<PackageReference Include="NATS.Client.JetStream" />
 
 		<PackageReference Include="StackExchange.Redis" />
 

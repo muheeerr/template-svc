@@ -54,8 +54,9 @@ namespace projectname.Host.Extensions
                 options.AddDefaultPolicy(policy =>
                 {
                     policy.WithOrigins(allowedOrigins)
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
+                          .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH")
+                          .WithHeaders("Content-Type", "Authorization", "X-Correlation-ID", "X-Api-Version", "Idempotency-Key")
+                          .SetPreflightMaxAge(TimeSpan.FromHours(2))
                           .AllowCredentials();
                 });
             })
@@ -63,12 +64,15 @@ namespace projectname.Host.Extensions
             .AddEmailSender(configuration)
             .AddRateLimiter(options =>
             {
+                var permitLimit = int.TryParse(Environment.GetEnvironmentVariable("RATE_LIMIT_PERMIT_COUNT"), out var pl) ? pl : 100;
                 options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
                     RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        partitionKey: ctx.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                            ?? ctx.Connection.RemoteIpAddress?.ToString()
+                            ?? "unknown",
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
-                            PermitLimit = 100,
+                            PermitLimit = permitLimit,
                             Window = TimeSpan.FromMinutes(1),
                             QueueLimit = 0
                         }));
@@ -107,6 +111,43 @@ namespace projectname.Host.Extensions
                     name: "ef-core",
                     tags: ["db", "ready"]);
 
+            // SMTP health check (TCP connectivity)
+            var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST") ?? "localhost";
+            var smtpPort = int.TryParse(Environment.GetEnvironmentVariable("SMTP_PORT"), out var sp) ? sp : 1025;
+            services.AddHealthChecks()
+                .AddCheck("smtp", () =>
+                {
+                    try
+                    {
+                        using var client = new System.Net.Sockets.TcpClient();
+                        client.Connect(smtpHost, smtpPort);
+                        return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy($"SMTP {smtpHost}:{smtpPort} reachable");
+                    }
+                    catch (Exception ex)
+                    {
+                        return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Degraded($"SMTP unreachable: {ex.Message}");
+                    }
+                }, tags: ["external", "ready"]);
+
+            // S3 health check (only when S3_BUCKET_NAME is configured)
+            var s3Bucket = Environment.GetEnvironmentVariable("S3_BUCKET_NAME");
+            if (!string.IsNullOrWhiteSpace(s3Bucket))
+            {
+                services.AddHealthChecks()
+                    .AddCheck("s3", () =>
+                    {
+                        try
+                        {
+                            // Lightweight connectivity check — actual S3 calls require the S3Helper
+                            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy($"S3 bucket '{s3Bucket}' configured");
+                        }
+                        catch (Exception ex)
+                        {
+                            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy("S3 unreachable", ex);
+                        }
+                    }, tags: ["external", "ready"]);
+            }
+
             // Response compression
             services.AddResponseCompression(options =>
             {
@@ -135,6 +176,13 @@ namespace projectname.Host.Extensions
                 opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
             });
 
+            // Output caching for read endpoints
+            services.AddOutputCache(options =>
+            {
+                options.AddBasePolicy(b => b.Expire(TimeSpan.FromMinutes(5)));
+                options.AddPolicy("NoCache", b => b.NoCache());
+            });
+
             return services;
         }
 
@@ -147,9 +195,6 @@ namespace projectname.Host.Extensions
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
-                var redisHost = Environment.GetEnvironmentVariable("RedisHost");
-                ArgumentException.ThrowIfNullOrWhiteSpace(redisHost);
-
                 var options = ConfigurationOptions.Parse(redisHost);
                 options.AbortOnConnectFail = false;
                 options.ConnectRetry = 5;

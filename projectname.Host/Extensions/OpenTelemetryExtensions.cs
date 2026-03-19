@@ -3,6 +3,7 @@ using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using projectname.Host.Metrics;
 
 namespace projectname.Host.Extensions;
 
@@ -17,6 +18,8 @@ public static class OpenTelemetryExtensions
         var serviceVersion = configuration["OTEL_SERVICE_VERSION"] ?? assembly.GetName().Version?.ToString() ?? "1.0.0";
         var environment = configuration["ASPNETCORE_ENVIRONMENT"] ?? "Production";
         var otlpEndpoint = configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
+
+        services.AddSingleton<ApplicationMetrics>();
 
         services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
@@ -33,7 +36,8 @@ public static class OpenTelemetryExtensions
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation()
-                    .AddNpgsqlInstrumentation();
+                    .AddNpgsqlInstrumentation()
+                    .AddMeter(ApplicationMetrics.MeterName);
 
                 if (!string.IsNullOrWhiteSpace(otlpEndpoint))
                     metrics.AddOtlpExporter();

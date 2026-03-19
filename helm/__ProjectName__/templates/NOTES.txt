@@ -1,0 +1,40 @@
+{{ .Release.Name }} has been deployed!
+
+=======================================================================
+⚠️  IMPORTANT: SECRET MANAGEMENT
+=======================================================================
+
+NEVER commit real secret values to values.yaml or this chart.
+
+Required secrets (must be provided at deploy time):
+  - JWT_KEY              Symmetric key for JWT signing (≥32 chars)
+  - JWT_ISSUER           JWT token issuer URL
+  - JWT_AUDIENCE         JWT token audience
+  - DBHost               PostgreSQL connection string
+  - AES_KEY              Base64-encoded AES-256 key
+  - SenderEmail          SMTP sender email
+  - SenderPassword       SMTP sender password
+  - ALLOWED_ORIGINS      Comma-separated CORS origins
+
+Recommended approaches:
+  1. external-secrets-operator (recommended for production)
+  2. AWS Secrets Manager / Azure Key Vault
+  3. Sealed Secrets (Bitnami)
+  4. --set flags at deploy time:
+     helm upgrade --install {{ .Release.Name }} ./helm/__ProjectName__ \
+       --set secrets.jwtKey=$JWT_KEY \
+       --set secrets.dbHost=$DB_HOST
+
+=======================================================================
+HEALTH ENDPOINTS
+=======================================================================
+
+  Liveness:  http://{{ .Release.Name }}:{{ .Values.service.port }}/health/live
+  Readiness: http://{{ .Release.Name }}:{{ .Values.service.port }}/health/ready
+  Full:      http://{{ .Release.Name }}:{{ .Values.service.port }}/health (requires auth)
+
+=======================================================================
+API DOCUMENTATION
+=======================================================================
+
+  Scalar UI: http://{{ .Release.Name }}:{{ .Values.service.port }}/scalar/v1

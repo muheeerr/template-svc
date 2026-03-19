@@ -21,6 +21,8 @@ public abstract class BaseSpecification<T>
 
     protected void ApplyPaging(int pageIndex, int pageSize)
     {
+        const int MaxPageSize = 100;
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
         Skip = (pageIndex - 1) * pageSize;
         Take = pageSize;
         IsPagingEnabled = true;

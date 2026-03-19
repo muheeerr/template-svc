@@ -51,10 +51,13 @@ namespace projectname.Host.Extensions
             // 10. Rate limiting
             app.UseRateLimiter();
 
-            // 11. Map gRPC services
+            // 11. Output cache (before endpoint mapping)
+            app.UseOutputCache();
+
+            // 12. Map gRPC services
             app.GrpcServices();
 
-            // 12. Terminal — map all feature endpoints
+            // 13. Terminal — map all feature endpoints
             app.MapEndpoints();
 
             // Database migrations

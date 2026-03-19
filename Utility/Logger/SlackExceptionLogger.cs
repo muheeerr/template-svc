@@ -26,7 +26,23 @@ public class SlackExceptionLogger
         try
         {
             var client = _httpClientFactory.CreateClient("slack");
-            var payload = JsonSerializer.Serialize(new { text = $"Exception: {ex.Message}\nStack: {ex.StackTrace}" });
+            // Redacted summary only — full stack trace stays in Serilog/OTEL
+            var payload = JsonSerializer.Serialize(new
+            {
+                text = $":rotating_light: *{ex.GetType().Name}* in `{ex.Source ?? "unknown"}`",
+                attachments = new[]
+                {
+                    new
+                    {
+                        color = "danger",
+                        fields = new[]
+                        {
+                            new { title = "Message", value = ex.Message, @short = false },
+                            new { title = "Time", value = DateTime.UtcNow.ToString("u"), @short = true }
+                        }
+                    }
+                }
+            });
             var content = new StringContent(payload, Encoding.UTF8, "application/json");
             await client.PostAsync(_webhookUrl, content, ct);
         }

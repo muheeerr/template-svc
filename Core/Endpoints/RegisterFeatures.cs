@@ -46,15 +46,14 @@ namespace Core.Endpoints
 
             foreach (IFeature endpoint in endpoints)
             {
-                var featureInterface = endpoint.GetType().GetInterfaces()
-            .FirstOrDefault(i => typeof(IFeature).IsAssignableFrom(i) && i != typeof(IFeature));
+                // Use the last namespace segment as the route group (e.g., Core.Features.Example → "Example")
+                var namespaceParts = endpoint.GetType().Namespace?.Split('.') ?? Array.Empty<string>();
+                var groupName = namespaceParts.Length > 2
+                    ? namespaceParts[^1]
+                    : endpoint.GetType().Name;
 
-                // Use the interface name without the leading 'I' as the prefix
-                var featureInterfaceName = featureInterface != null && featureInterface.Name.StartsWith("I") && featureInterface.Name.Length > 1
-                    ? featureInterface.Name.Substring(1)
-                    : featureInterface?.Name ?? endpoint.GetType().Name;
                 var group = builder
-                    .MapGroup($"/v{{version:apiVersion}}/{featureInterfaceName}")
+                    .MapGroup($"/v{{version:apiVersion}}/{groupName}")
                     .WithApiVersionSet(versionSet);
                 endpoint.Map(group);
             }

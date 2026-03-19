@@ -6,11 +6,21 @@ using System.Collections.Concurrent;
 
 namespace DA.Persistence
 {
-    public interface IUnitOfWork : IDisposable
+    /// <summary>
+    /// Unit of work pattern wrapping AppDbContext with transaction support.
+    /// <para>
+    /// Add typed repository properties for each aggregate root:
+    /// <code>
+    /// // In IUnitOfWork:
+    /// IRepository&lt;Order, AppDbContext&gt; Orders { get; }
+    /// 
+    /// // In UnitOfWork:
+    /// public IRepository&lt;Order, AppDbContext&gt; Orders =&gt; GetRepository&lt;Order, AppDbContext&gt;();
+    /// </code>
+    /// </para>
+    /// </summary>
+    public interface IUnitOfWork : IDisposable, IAsyncDisposable
     {
-        // TODO: Add your repository properties here
-        // Example: IRepository<YourEntity, AppDbContext> YourEntities { get; }
-
         Task BeginTransactionAsync(CancellationToken cancellationToken = default);
         Task CommitTransactionAsync(CancellationToken cancellationToken = default);
         Task RollbackTransactionAsync();
@@ -38,8 +48,8 @@ namespace DA.Persistence
             );
         }
 
-        // TODO: Add your repository property implementations here
-        // Example: public IRepository<YourEntity, AppDbContext> YourEntities => GetRepository<YourEntity, AppDbContext>();
+        // Add typed repository properties here. Example:
+        // public IRepository<Order, AppDbContext> Orders => GetRepository<Order, AppDbContext>();
 
         #region Commit and Dispose
         public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
@@ -109,6 +119,12 @@ namespace DA.Persistence
         public virtual void Dispose()
         {
             _db.Dispose();
+            GC.SuppressFinalize(this);
+        }
+
+        public virtual async ValueTask DisposeAsync()
+        {
+            await _db.DisposeAsync();
             GC.SuppressFinalize(this);
         }
         #endregion Commit and Dispose

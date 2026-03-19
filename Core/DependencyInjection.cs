@@ -1,4 +1,5 @@
-﻿using DA;
+﻿using Core.Events;
+using DA;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -12,6 +13,9 @@ public static class DependencyInjection
         services
             .AddDALayer(configuration)
             .AddServices();
+
+        // Domain event dispatcher (registered against DA interface so AppDbContext can resolve it)
+        services.AddScoped<DA.Events.IDomainEventDispatcher, InProcessDomainEventDispatcher>();
 
         // TODO: Register your services here
         // Example: services.AddTransient<YourService>();
