@@ -1,7 +1,4 @@
 <Solution>
-  <Folder Name="/Auth/">
-    <Project Path="Auth/Auth.csproj" />
-  </Folder>
   <Folder Name="/docs/">
     <File Path="C:/Users/smuhe/Downloads/COPILOT_PROMPT_PHASE3.md" />
     <File Path="docs/ARCHITECTURE-ANALYSIS.md" />
