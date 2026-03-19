@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/docs/">
+    <File Path="docs/ARCHITECTURE-ANALYSIS.md" />
+    <File Path="docs/ARCHITECTURE_REVIEW.md" />
+    <File Path="docs/COPILOT_PROMPT_PHASE1_2.md" />
+  </Folder>
   <Folder Name="/Host/">
     <Project Path="__ProjectName__.Host/__ProjectName__.Host.csproj" />
   </Folder>
