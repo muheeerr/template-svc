@@ -30,6 +30,7 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.StackExchangeRedis" Version="1.12.0-beta.2" />
     <PackageVersion Include="Npgsql.OpenTelemetry" Version="9.0.3" />
     <!-- Logging -->
+    <PackageVersion Include="Scriban" Version="6.6.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageVersion Include="Serilog.Sinks.Seq" Version="9.0.0" />
